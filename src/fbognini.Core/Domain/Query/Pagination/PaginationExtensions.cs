@@ -17,94 +17,49 @@ namespace fbognini.Core.Domain.Query.Pagination
             return list.QueryPagination(searchCriteria, out var _);
         }
 
-        private static void UpdatePageCriteriaTotals<T>(PageCriteria page, IQueryable<T> list)
+        public static IQueryable<T> QueryPagination<T>(this IQueryable<T> list, QueryableCriteria<T> criteria, out PaginationResult? pagination)
         {
-            if (!page.MaxTake.HasValue)
+            var page = criteria.Page;
+
+            if (!InitializePagination(list, page, out pagination))
             {
-                page.Total = list.Count();
-                page.AtLeast = false;
-                return;
-            }
-
-            var take = page.MaxTake.Value + 1;
-            var total = list.Take(take).Count();
-            if (total != take)
-            {
-                page.Total = total;
-                page.AtLeast = false;
-                return;
-            }
-
-            page.Total = total - 1;
-            page.AtLeast = true;
-        }
-
-        public static IQueryable<T> QueryPagination<T>(this IQueryable<T> list, QueryableCriteria<T> selectCriteria, out PaginationResult? pagination)
-        {
-            var page = selectCriteria.Page;
-
-            if (!page.Size.HasValue)
-            {
-                pagination = null;
                 return list;
             }
+            pagination!.PageSize = page.Size!.Value;
 
-            pagination = new PaginationResult();
-
-            UpdatePageCriteriaTotals(page, list);
-
-            pagination.Total = page.Total;
-            pagination.AtLeast = page.AtLeast;
-
-            if (page.Size == -1)
+            if (!page.Number.HasValue)
             {
                 return list;
             }
 
-            pagination.PageSize = page.Size.Value;
-            if (page.Number.HasValue)
-            {
-                list = list
-                    .Skip((page.Number.Value - 1) * page.Size.Value)
-                    .Take(page.Size.Value);
-                pagination.PageNumber = page.Number.Value;
-            }
+            pagination.PageNumber = page.Number.Value;
 
-            return list;
+            return list
+                .Skip((page.Number.Value - 1) * page.Size.Value)
+                .Take(page.Size.Value);
         }
 
-        public static IQueryable<T> QueryPagination<T>(this IQueryable<T> list, QueryableAuditableCriteria<T> searchCriteria, out PaginationResult? pagination)
+        public static IQueryable<T> QueryPagination<T>(this IQueryable<T> list, QueryableAuditableCriteria<T> criteria, out PaginationResult? pagination)
             where T : IHaveId<long>, IHaveLastUpdated
         {
-            var page = searchCriteria.Page;
+            var page = criteria.Page;
 
-            if (!page.Size.HasValue)
-            {
-                pagination = null;
-                return list;
-            }
-
-            pagination = new PaginationResult();
-
-            UpdatePageCriteriaTotals(page, list);
-
-            pagination.Total = page.Total;
-            pagination.AtLeast = page.AtLeast;
-
-            if (page.Size == -1)
+            if (!InitializePagination(list, page, out pagination))
             {
                 return list;
             }
+            pagination!.PageSize = page.Size!.Value;
 
-            pagination.PageSize = page.Size.Value;
             if (page.Number.HasValue)
             {
-                list = list
+                pagination.PageNumber = page.Number.Value;
+
+                return list
                     .Skip((page.Number.Value - 1) * page.Size.Value)
                     .Take(page.Size.Value);
-                pagination.PageNumber = page.Number.Value;
             }
-            else if (page.Since.HasValue)
+
+            if (page.Since.HasValue)
             {
                 var since = new DateTime(1970, 1, 1).AddTicks(page.Since.Value * 10000);
                 list = list.Where(x => x.LastUpdatedOnUtc >= since);
@@ -140,6 +95,51 @@ namespace fbognini.Core.Domain.Query.Pagination
             }
 
             return list;
+        }
+
+        private static bool InitializePagination<T>(IQueryable<T> list, PageCriteria page, out PaginationResult? pagination)
+        {
+            if (!page.Size.HasValue)
+            {
+                pagination = null;
+                return false;
+            }
+
+            pagination = new PaginationResult();
+
+            UpdatePageCriteriaTotals(page, list);
+
+            pagination.Total = page.Total;
+            pagination.AtLeast = page.AtLeast;
+
+            if (page.Size != -1)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static void UpdatePageCriteriaTotals<T>(PageCriteria page, IQueryable<T> list)
+        {
+            if (!page.MaxTake.HasValue)
+            {
+                page.Total = list.Count();
+                page.AtLeast = false;
+                return;
+            }
+
+            var take = page.MaxTake.Value + 1;
+            var total = list.Take(take).Count();
+            if (total != take)
+            {
+                page.Total = total;
+                page.AtLeast = false;
+                return;
+            }
+
+            page.Total = total - 1;
+            page.AtLeast = true;
         }
     }
 }

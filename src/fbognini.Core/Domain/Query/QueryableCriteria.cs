@@ -16,8 +16,6 @@ namespace fbognini.Core.Domain.Query
         {
         }
 
-        public Func<IQueryable<T>, IQueryable<T>>? QueryProcessing { get; set; }
-
         public virtual PageCriteria Page { get; } = new();
         public IReadOnlyList<KeyValuePair<string, SortingDirection>> Sorting => _sorting;
         public Search<T> Search { get; } = new Search<T>();

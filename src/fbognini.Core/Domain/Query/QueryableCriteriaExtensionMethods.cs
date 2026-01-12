@@ -22,26 +22,31 @@ namespace fbognini.Core.Domain.Query
                 return query;
             }
 
-            query = query
+            return query
                     .Where(criteria.ResolveFilter().Expand())
                     .AdvancedSearch(criteria)
                     .OrderByDynamic(criteria);
-
-            if (criteria.QueryProcessing != null)
-            {
-                query = criteria.QueryProcessing(query);
-            }
-
-            return query;
         }
 
         public static IQueryable<T> QuerySearch<T>(this IQueryable<T> query, QueryableCriteria<T> criteria, out PaginationResult? pagination)
             where T : class
-            => query.QueryPagination(criteria, out pagination);
+        {
+            return query
+                .Where(criteria.ResolveFilter().Expand())
+                .AdvancedSearch(criteria)
+                .QueryPagination(criteria, out pagination)
+                .OrderByDynamic(criteria);
+        }
 
         public static IQueryable<T> QuerySearch<T>(this IQueryable<T> query, QueryableAuditableCriteria<T> criteria, out PaginationResult? pagination)
-            where T : IHaveId<long>, IHaveLastUpdated
-            => query.QueryPagination(criteria, out pagination);
+            where T : class, IHaveId<long>, IHaveLastUpdated
+        {
+            return query
+                .Where(criteria.ResolveFilter().Expand())
+                .AdvancedSearch(criteria)
+                .QueryPagination(criteria, out pagination)
+                .OrderByDynamic(criteria);
+        }
 
         public static IOrderedQueryable<TEntity> OrderBy<TEntity>(
             this IQueryable<TEntity> source,
