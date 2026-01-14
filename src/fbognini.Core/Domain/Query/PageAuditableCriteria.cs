@@ -10,5 +10,6 @@ public class PageAuditableCriteria: PageCriteria
 {
     public long? Since { get; internal set; }
     public long? AfterId { get; internal set; }
+    [Obsolete("Use QueryPagination with no out PaginationResult parameter")]
     internal string? ContinuationSince { get; set; }
 }

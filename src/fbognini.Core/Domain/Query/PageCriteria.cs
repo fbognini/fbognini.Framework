@@ -17,6 +17,8 @@ public class PageCriteria
     /// </summary>
     public int? MaxTake { get; internal set; }
 
+    [Obsolete("Use QueryPagination with no out PaginationResult parameter")]
     internal int? Total { get; set; }
+    [Obsolete("Use QueryPagination with no out PaginationResult parameter")]
     internal bool? AtLeast { get; set; }
 }

@@ -31,21 +31,29 @@ namespace fbognini.Core.Domain.Query
         public static IQueryable<T> QuerySearch<T>(this IQueryable<T> query, QueryableCriteria<T> criteria, out PaginationResult? pagination)
             where T : class
         {
-            return query
+            var filteredQuery = query
                 .Where(criteria.ResolveFilter().Expand())
-                .AdvancedSearch(criteria)
-                .QueryPagination(criteria, out pagination)
-                .OrderByDynamic(criteria);
+                .AdvancedSearch(criteria);
+
+            pagination = PaginationExtensions.CalculatePaginationResult(filteredQuery, criteria);
+
+            return filteredQuery
+                .OrderByDynamic(criteria)
+                .QueryPagination(criteria);
         }
 
         public static IQueryable<T> QuerySearch<T>(this IQueryable<T> query, QueryableAuditableCriteria<T> criteria, out PaginationResult? pagination)
             where T : class, IHaveId<long>, IHaveLastUpdated
         {
-            return query
+            var filteredQuery = query
                 .Where(criteria.ResolveFilter().Expand())
-                .AdvancedSearch(criteria)
-                .QueryPagination(criteria, out pagination)
-                .OrderByDynamic(criteria);
+                .AdvancedSearch(criteria);
+
+            pagination = PaginationExtensions.CalculatePaginationResult(filteredQuery, criteria);
+
+            return filteredQuery
+                .OrderByDynamic(criteria)
+                .QueryPagination(criteria);
         }
 
         public static IOrderedQueryable<TEntity> OrderBy<TEntity>(
