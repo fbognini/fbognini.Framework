@@ -355,7 +355,7 @@ namespace fbognini.Infrastructure.Repository
         public async Task<PaginationResponse<T>> GetSearchResultsAsync<T>(SearchCriteria<T> criteria, CancellationToken cancellationToken = default)
             where T : class, IHaveId<long>, IHaveLastUpdated, IEntity
         {
-            var query = GetPrivateQueryable(criteria)
+            var query = GetPrivateQueryable(criteria.Args)
                 .QuerySearch(criteria, out var pagination);
 
             var list = await query.ToListAsync(cancellationToken);
@@ -405,9 +405,6 @@ namespace fbognini.Infrastructure.Repository
             => GetPrivateQueryable(args).Where(x => x.Slug.Equals(slug)).Take(1);
 
         private IQueryable<T> GetPrivateQueryable<T>(SelectCriteria<T>? criteria = null) where T : class, IEntity
-            => GetPrivateQueryable(criteria?.Args).QuerySelect(criteria);
-
-        private IQueryable<T> GetPrivateQueryable<T>(SearchCriteria<T>? criteria = null) where T : class, IHaveId<long>, IHaveLastUpdated, IEntity
             => GetPrivateQueryable(criteria?.Args).QuerySelect(criteria);
 
         private IQueryable<T> GetTrackedQueryable<T>(SelectCriteria<T>? criteria = null) where T : class, IEntity
@@ -696,7 +693,7 @@ namespace fbognini.Infrastructure.Repository
         public void Dispose() => context.Dispose();
 
 
-        private static T PostProcessing<T>(T result, SelectCriteria<T?>? criteria)
+        private static T PostProcessing<T>(T result, SelectCriteria<T>? criteria)
         {
             criteria ??= new();
 

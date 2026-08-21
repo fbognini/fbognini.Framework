@@ -2,8 +2,9 @@
 
 	<PropertyGroup>
 		<PackageId>fbognini.Core</PackageId>
-		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+		<Description>A class library with core implementations for fbognini projects.</Description>
 		<Version>11.3.4</Version>
+		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
 		<Authors>Francesco Bognini</Authors>
 		<Company>Francesco Bognini</Company>
 		<PackageReadmeFile>README.md</PackageReadmeFile>

@@ -2,6 +2,7 @@
 using fbognini.Infrastructure.Common;
 using fbognini.Infrastructure.Entities;
 using fbognini.Infrastructure.Outbox;
+using fbognini.Infrastructure.Persistence.ConnectionString;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
@@ -30,7 +31,7 @@ namespace fbognini.Infrastructure.Persistence
             switch (dbProvider)
             {
                 case DbProviderKeys.SqlServer:
-                    optionsBuilder.UseSqlServer(connectionString);
+                    optionsBuilder.UseSqlServer(connectionString.WithApplicationName(dbProvider)!);
                     break;
                 case DbProviderKeys.Npgsql:
                     optionsBuilder.UseNpgsql(connectionString);
@@ -260,7 +261,7 @@ namespace fbognini.Infrastructure.Persistence
                         continue;
                     }
 
-                    var originalValue = originalValues[propertyName];
+                    var originalValue = originalValues?[propertyName];
 
                     if (entry.State == EntityState.Deleted)
                     {

@@ -15,7 +15,7 @@ namespace fbognini.Infrastructure.Persistence
 {
     public static class Startup
     {
-        private static IServiceCollection AddBasePersistence<T>(this IServiceCollection services, IConfiguration configuration)
+        private static IServiceCollection AddBasePersistence<T>(this IServiceCollection services, IConfiguration configuration, Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptions = null)
             where T : DbContext, IBaseDbContext
         {
             LinqToDBForEFTools.Initialize();
@@ -25,10 +25,12 @@ namespace fbognini.Infrastructure.Persistence
 
             return services
                 .Configure<DatabaseSettings>(configuration.GetSection(nameof(DatabaseSettings)))
-                .AddDbContextFactory<T>(contextOptions =>
+                .AddDbContextFactory<T>((provider, contextOptions) =>
                 {
                     contextOptions.ConfigureDbProvider(databaseSettings.DBProvider!, databaseSettings.ConnectionString!);
                     contextOptions.UseQueryTrackingBehavior(databaseSettings.TrackingBehavior);
+
+                    configureDbContextOptions?.Invoke(provider, contextOptions);
 
                 }, lifetime: ServiceLifetime.Scoped) // Needed lifetime scoped to avoid issue "Cannot resolve scoped service ICurrentUserService from root provider."
                 .AddTransient<ApplicationDatabaseInitializer<T>>()
@@ -38,45 +40,47 @@ namespace fbognini.Infrastructure.Persistence
                 .AddTransient<IConnectionStringValidator, ConnectionStringValidator>();
         }
 
-        public static FinbuckleMultiTenantBuilder<TTenant> AddPersistenceAndMultitenancy<T, TTenantContext, TTenant>(this IServiceCollection services, IConfiguration configuration)
+        public static FinbuckleMultiTenantBuilder<TTenant> AddPersistenceAndMultitenancy<T, TTenantContext, TTenant>(this IServiceCollection services, IConfiguration configuration, Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptions = null)
             where T : DbContext, IBaseDbContext
             where TTenantContext : TenantDbContext<TTenant>
             where TTenant : Tenant, new()
         {
-            services.AddDbContext<TTenantContext>(m =>
+            services.AddDbContext<TTenantContext>((provider, m) =>
             {
                 var databaseSettings = GetDatabaseSettingsAndGuard(configuration);
                 m.ConfigureDbProvider(databaseSettings.DBProvider, databaseSettings.ConnectionString!);
+
+                configureDbContextOptions?.Invoke(provider, m);
             });
 
             return services
-                .AddBasePersistence<T>(configuration)
+                .AddBasePersistence<T>(configuration, configureDbContextOptions)
                 .AddOutboxProcessing<T, TTenant>()
                 .AddMultiTenantInitializer<T, TTenantContext, TTenant>()
                 .AddMultitenancy<TTenantContext, TTenant>(configuration);
         }
 
 
-        public static FinbuckleMultiTenantBuilder<TTenant> AddPersistenceAndMultitenancy<T, TTenant>(this IServiceCollection services, IConfiguration configuration)
+        public static FinbuckleMultiTenantBuilder<TTenant> AddPersistenceAndMultitenancy<T, TTenant>(this IServiceCollection services, IConfiguration configuration, Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptions = null)
             where T : DbContext, IBaseDbContext
             where TTenant : Tenant, new()
         {
-            return services.AddBasePersistence<T>(configuration)
+            return services.AddBasePersistence<T>(configuration, configureDbContextOptions)
                 .AddOutboxProcessing<T, TTenant>()
                 .AddMultiTenantInitializer<T, TTenant>()
                 .AddMultitenancy<TTenant>(configuration);
         }
 
-        public static FinbuckleMultiTenantBuilder<Tenant> AddPersistenceAndMultitenancy<T>(this IServiceCollection services, IConfiguration configuration)
+        public static FinbuckleMultiTenantBuilder<Tenant> AddPersistenceAndMultitenancy<T>(this IServiceCollection services, IConfiguration configuration, Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptions = null)
             where T : DbContext, IBaseDbContext
         {
-            return services.AddPersistenceAndMultitenancy<T, Tenant>(configuration);
+            return services.AddPersistenceAndMultitenancy<T, Tenant>(configuration, configureDbContextOptions);
         }
 
-        public static IServiceCollection AddPersistence<T>(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddPersistence<T>(this IServiceCollection services, IConfiguration configuration, Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptions = null)
             where T : DbContext, IBaseDbContext
         {
-            return services.AddBasePersistence<T>(configuration);
+            return services.AddBasePersistence<T>(configuration, configureDbContextOptions);
         }
 
         public static IServiceCollection AddMultiTenantInitializer<T, TTenantContext, TTenant>(this IServiceCollection services)

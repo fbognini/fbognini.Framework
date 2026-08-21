@@ -2,8 +2,9 @@
 
 	<PropertyGroup>
 		<PackageId>fbognini.Infrastructure</PackageId>
+		<Description>A class library with core implementations for fbognini projects.</Description>
+		<Version>11.4.0</Version>
 		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
-		<Version>11.3.0</Version>
 		<Authors>Francesco Bognini</Authors>
 		<Company>Francesco Bognini</Company>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -23,8 +24,6 @@
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 
 		<PackageReference Include="Snickler.EFCore" Version="3.0.0" />
-
-		<PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
 	</ItemGroup>
 
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">

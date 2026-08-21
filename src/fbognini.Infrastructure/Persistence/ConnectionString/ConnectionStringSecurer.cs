@@ -30,45 +30,9 @@ namespace fbognini.Infrastructure.Persistence.ConnectionString
             {
                 DbProviderKeys.Npgsql => MakeSecureNpgsqlConnectionString(connectionString),
                 DbProviderKeys.SqlServer => MakeSecureSqlConnectionString(connectionString),
-                //DbProviderKeys.MySql => MakeSecureMySqlConnectionString(connectionString),
-                //DbProviderKeys.Oracle => MakeSecureOracleConnectionString(connectionString),
                 _ => connectionString
             };
         }
-
-        //private string MakeSecureOracleConnectionString(string connectionString)
-        //{
-        //    var builder = new OracleConnectionStringBuilder(connectionString);
-
-        //    if (!string.IsNullOrEmpty(builder.Password))
-        //    {
-        //        builder.Password = HiddenValueDefault;
-        //    }
-
-        //    if (!string.IsNullOrEmpty(builder.UserID))
-        //    {
-        //        builder.UserID = HiddenValueDefault;
-        //    }
-
-        //    return builder.ToString();
-        //}
-
-        //private string MakeSecureMySqlConnectionString(string connectionString)
-        //{
-        //    var builder = new MySqlConnectionStringBuilder(connectionString);
-
-        //    if (!string.IsNullOrEmpty(builder.Password))
-        //    {
-        //        builder.Password = HiddenValueDefault;
-        //    }
-
-        //    if (!string.IsNullOrEmpty(builder.UserID))
-        //    {
-        //        builder.UserID = HiddenValueDefault;
-        //    }
-
-        //    return builder.ToString();
-        //}
 
         private string MakeSecureSqlConnectionString(string connectionString)
         {
