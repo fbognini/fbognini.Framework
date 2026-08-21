@@ -113,9 +113,10 @@ jobs:
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
 
+      # dotnet nuget push does not expand wildcards itself, so bash has to hand it one path at a time.
       - name: Push the remaining packages
-        run: >
-          dotnet nuget push "./artifacts/*.nupkg"
-          --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
-          --source https://api.nuget.org/v3/index.json
-          --skip-duplicate
+        shell: bash
+        run: |
+          for pkg in ./artifacts/*.nupkg; do
+            dotnet nuget push "$pkg" --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+          done

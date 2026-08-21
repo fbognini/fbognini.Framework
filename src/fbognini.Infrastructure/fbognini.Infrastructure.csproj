@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <PackageId>fbognini.Infrastructure</PackageId>
-    <!-- Stays on net8.0 until the Finbuckle 6 to 10, EF Core 10 ExecuteUpdate and linq2db 10 API migrations are done. -->
     <TargetFrameworks>net8.0</TargetFrameworks>
     <Description>Persistence, multitenancy and repository implementations for fbognini projects.</Description>
   </PropertyGroup>
