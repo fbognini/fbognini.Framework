@@ -1,72 +1,35 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<PackageId>fbognini.Infrastructure</PackageId>
-		<Description>A class library with core implementations for fbognini projects.</Description>
-		<Version>11.4.0</Version>
-		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
-		<Authors>Francesco Bognini</Authors>
-		<Company>Francesco Bognini</Company>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageLicenseFile>LICENSE</PackageLicenseFile>
-		<PackageProjectUrl>https://github.com/fbognini/fbognini</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/fbognini/fbognini</RepositoryUrl>
-		<Nullable>enable</Nullable>
-	</PropertyGroup>
+  <PropertyGroup>
+    <PackageId>fbognini.Infrastructure</PackageId>
+    <!-- Stays on net8.0 until the Finbuckle 6 to 10, EF Core 10 ExecuteUpdate and linq2db 10 API migrations are done. -->
+    <TargetFrameworks>net8.0</TargetFrameworks>
+    <Description>Persistence, multitenancy and repository implementations for fbognini projects.</Description>
+  </PropertyGroup>
 
-	<ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.6" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Snickler.EFCore" Version="3.0.0" />
+    <PackageReference Include="FastIDs.TypeId.Serialization.SystemTextJson" Version="1.1.1" />
+    <PackageReference Include="FastIDs.TypeId.Serialization.JsonNet" Version="1.1.1" />
+    <PackageReference Include="MediatR" Version="12.2.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="$(ExtensionsVersion)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="$(ExtensionsVersion)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="$(ExtensionsVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="$(ExtensionsVersion)" />
+  </ItemGroup>
 
-		<PackageReference Include="fbognini.Core.Domain" Version="11.3.0" />
+  <ItemGroup>
+    <PackageReference Include="Finbuckle.MultiTenant.AspNetCore" Version="6.13.1" />
+    <PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="6.13.1" />
+    <PackageReference Include="EFCore.BulkExtensions" Version="8.1.3" />
+    <PackageReference Include="linq2db.EntityFrameworkCore" Version="8.1.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+  </ItemGroup>
 
-		<PackageReference Include="Finbuckle.MultiTenant.AspNetCore" Version="6.13.1" />
-		<PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="6.13.1" />
-		<PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  <ItemGroup>
+    <ProjectReference Include="..\fbognini.Core.Domain\fbognini.Core.Domain.csproj" />
+  </ItemGroup>
 
-		<PackageReference Include="Snickler.EFCore" Version="3.0.0" />
-	</ItemGroup>
-
-	<ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
-		<PackageReference Include="FastIDs.TypeId.Serialization.SystemTextJson" Version="1.1.1" />
-		<PackageReference Include="FastIDs.TypeId.Serialization.JsonNet" Version="1.1.1" />
-		<PackageReference Include="MediatR" Version="12.2.0" />
-		<PackageReference Include="EFCore.BulkExtensions" Version="8.1.3" />		
-		<PackageReference Include="linq2db.EntityFrameworkCore" Version="8.1.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.19" />
-		<PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="8.0.19" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.19" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.19" />
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
-	</ItemGroup>
-
-	<ItemGroup Condition=" '$(TargetFramework)' == 'net7.0' ">
-		<PackageReference Include="FastIDs.TypeId.Serialization.SystemTextJson" Version="0.2.3" />
-		<PackageReference Include="FastIDs.TypeId.Serialization.JsonNet" Version="0.2.2" />
-		<PackageReference Include="MediatR" Version="12.2.0" />
-		<PackageReference Include="EFCore.BulkExtensions" Version="7.8.1" />
-		<PackageReference Include="linq2db.EntityFrameworkCore" Version="7.7.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.20" />
-		<PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="7.0.20" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.20" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.20" />
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.18" />
-	</ItemGroup>
-
-	<ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
-		<PackageReference Include="FastIDs.TypeId.Serialization.SystemTextJson" Version="0.2.3" />
-		<PackageReference Include="FastIDs.TypeId.Serialization.JsonNet" Version="0.2.2" />
-		<PackageReference Include="MediatR" Version="12.1.1" />
-		<PackageReference Include="EFCore.BulkExtensions" Version="6.8.1" />
-		<PackageReference Include="linq2db.EntityFrameworkCore" Version="6.17.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.36" />
-		<PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="6.0.36" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.36" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.36" />
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.29" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<None Include="..\..\LICENSE" Pack="true" PackagePath="" />
-		<None Include="..\..\README.md" Pack="true" PackagePath="" />
-	</ItemGroup>
 </Project>

@@ -1,0 +1,121 @@
+name: publish
+
+# A tag is the trigger because it pins exactly which commit produced a given version: relaunching a
+# manual run from a moving branch would publish a different tree under the same version number.
+# Dispatch stays as an escape hatch for a re-run after a partially failed push.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Full version to publish, e.g. 12.0.0 or 12.1.0-alpha.1'
+        required: true
+
+jobs:
+  publish:
+    # The integration tests need SQL Server LocalDB, which only exists on the Windows images.
+    runs-on: windows-latest
+
+    # The trusted publishing policy validates the repository, the workflow file and the environment —
+    # it does not restrict which ref ran it. The approval on this environment is that missing check.
+    environment: nuget
+
+    permissions:
+      id-token: write   # lets this job request the OIDC token nuget.org exchanges for a temporary key
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Start LocalDB
+        shell: pwsh
+        run: sqllocaldb start MSSQLLocalDB
+
+      # The tag is the single source of truth for a published version. VersionPrefix in
+      # Directory.Build.props only serves local builds.
+      - name: Resolve version from the tag
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::'$VERSION' is not a valid SemVer version. Tag as v12.0.0 or v12.0.0-alpha.1."
+            exit 1
+          fi
+
+          PREFIX="${VERSION%%-*}"
+          case "$VERSION" in
+            *-*) SUFFIX="${VERSION#*-}" ;;
+            *)   SUFFIX="" ;;
+          esac
+
+          echo "args=-p:VersionPrefix=$PREFIX -p:VersionSuffix=$SUFFIX" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing $VERSION"
+
+      - run: dotnet restore
+
+      - run: dotnet build --no-restore --configuration Release ${{ steps.version.outputs.args }}
+
+      - run: dotnet test --no-build --configuration Release ${{ steps.version.outputs.args }}
+
+      - run: dotnet pack --no-build --configuration Release --output ./artifacts ${{ steps.version.outputs.args }}
+
+      # Every package in the repository moves in lockstep, so a missing one means a project silently
+      # stopped being packable rather than a version that was deliberately held back.
+      - name: Check the packages carry the expected version
+        shell: bash
+        run: |
+          for id in fbognini.Core fbognini.Core.Domain fbognini.Infrastructure; do
+            if [ ! -f "./artifacts/$id.${{ steps.version.outputs.version }}.nupkg" ]; then
+              echo "::error::No package was produced for $id ${{ steps.version.outputs.version }}."
+              ls -1 ./artifacts
+              exit 1
+            fi
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: ./artifacts/*.nupkg
+
+      # The key lasts about an hour, so it is requested here rather than at the top of the job.
+      - name: Exchange the OIDC token for a temporary NuGet key
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      # Core goes first, then Core.Domain: each is a dependency of the packages pushed after it.
+      - name: Push fbognini.Core
+        run: >
+          dotnet nuget push ./artifacts/fbognini.Core.${{ steps.version.outputs.version }}.nupkg
+          --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
+
+      - name: Push fbognini.Core.Domain
+        run: >
+          dotnet nuget push ./artifacts/fbognini.Core.Domain.${{ steps.version.outputs.version }}.nupkg
+          --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
+
+      - name: Push the remaining packages
+        run: >
+          dotnet nuget push "./artifacts/*.nupkg"
+          --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate

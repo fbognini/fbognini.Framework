@@ -1,0 +1,55 @@
+name: build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      version_suffix:
+        description: 'Prerelease suffix (e.g. alpha.2). Leave empty to build the stable version.'
+        required: false
+        default: ''
+
+jobs:
+  build:
+    # The integration tests need SQL Server LocalDB, which only exists on the Windows images.
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Start LocalDB
+        shell: pwsh
+        run: sqllocaldb start MSSQLLocalDB
+
+      # The suffix has to be identical in build, test and pack, or --no-build packs assemblies stamped
+      # with one version into a package named after another.
+      - name: Resolve version arguments
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "args=-p:VersionSuffix=${{ inputs.version_suffix }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "args=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - run: dotnet restore
+
+      - run: dotnet build --no-restore --configuration Release ${{ steps.version.outputs.args }}
+
+      - run: dotnet test --no-build --configuration Release ${{ steps.version.outputs.args }}
+
+      - run: dotnet pack --no-build --configuration Release --output ./artifacts ${{ steps.version.outputs.args }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: ./artifacts/*.nupkg

@@ -1,26 +1,16 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<PackageId>fbognini.Core.Domain</PackageId>
-		<Description>A class library with core implementations for fbognini projects.</Description>
-		<Version>11.3.0</Version>
-		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
-		<Authors>Francesco Bognini</Authors>
-		<Company>Francesco Bognini</Company>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageLicenseFile>LICENSE</PackageLicenseFile>
-		<PackageProjectUrl>https://github.com/fbognini/fbognini</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/fbognini/fbognini</RepositoryUrl>
-		<Nullable>enable</Nullable>
-	</PropertyGroup>
+  <PropertyGroup>
+    <PackageId>fbognini.Core.Domain</PackageId>
+    <Description>Domain primitives for fbognini projects.</Description>
+  </PropertyGroup>
 
-	<ItemGroup>
-		<PackageReference Include="fbognini.Core" Version="11.3.0" />
-		<PackageReference Include="MediatR.Contracts" Version="2.0.1" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MediatR.Contracts" Version="2.0.1" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<None Include="..\..\LICENSE" Pack="true" PackagePath="" />
-		<None Include="..\..\README.md" Pack="true" PackagePath="" />
-	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\fbognini.Core\fbognini.Core.csproj" />
+  </ItemGroup>
+
 </Project>
