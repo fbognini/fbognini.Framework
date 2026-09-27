@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <VersionPrefix>12.0.0</VersionPrefix>
+    <VersionPrefix>12.0.1</VersionPrefix>
     <!-- Override from the command line: -p:VersionSuffix=alpha.1. -->
     <VersionSuffix></VersionSuffix>
     <Authors>Francesco Bognini</Authors>

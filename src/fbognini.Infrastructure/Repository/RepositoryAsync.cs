@@ -3,6 +3,7 @@ using fbognini.Core.Exceptions;
 using fbognini.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Snickler.EFCore;
 using System;
@@ -25,6 +26,7 @@ namespace fbognini.Infrastructure.Repository
     {
         private readonly TContext context;
         private readonly ILogger<RepositoryAsync<TContext>> logger;
+        private readonly IServiceScope? ownedScope;
 
         protected readonly Hashtable repositorys = new();
 
@@ -37,6 +39,25 @@ namespace fbognini.Infrastructure.Repository
         public RepositoryAsync(TContext context, ILogger<RepositoryAsync<TContext>> logger)
         {
             this.context = context;
+            this.logger = logger;
+        }
+
+        // The context is built in a DI scope of its own, so the repository outlives the scope of whoever creates it.
+        // A scoped IDbContextFactory resolves the context's dependencies from the scope it came from, and a repository created after that scope ends, as in a background cache refresh, fails with ObjectDisposedException.
+        protected RepositoryAsync(IServiceScopeFactory scopeFactory, ILogger<RepositoryAsync<TContext>> logger)
+        {
+            var scope = scopeFactory.CreateScope();
+            try
+            {
+                this.context = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TContext>>().CreateDbContext();
+            }
+            catch
+            {
+                scope.Dispose();
+                throw;
+            }
+
+            this.ownedScope = scope;
             this.logger = logger;
         }
 
@@ -690,7 +711,11 @@ namespace fbognini.Infrastructure.Repository
             return context.LoadStoredProc(name, prependDefaultSchema, commandTimeout);
         }
 
-        public void Dispose() => context.Dispose();
+        public void Dispose()
+        {
+            context.Dispose();
+            ownedScope?.Dispose();
+        }
 
 
         private static T PostProcessing<T>(T result, SelectCriteria<T>? criteria)
