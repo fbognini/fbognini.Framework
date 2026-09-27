@@ -2,8 +2,8 @@
 using fbognini.Application.Multitenancy;
 using fbognini.Infrastructure.Common;
 using fbognini.Infrastructure.Entities;
+using fbognini.Infrastructure.Multitenancy;
 using fbognini.Infrastructure.Persistence;
-using Finbuckle.MultiTenant;
 using LinqToDB;
 using LinqToDB.DataProvider.PostgreSQL;
 using LinqToDB.DataProvider.SqlServer;
@@ -78,7 +78,7 @@ namespace fbognini.Infrastructure.Outbox
                     var propertys = new Dictionary<string, object?>()
                     {
                         ["OutboxMessageId"] = outboxMessage.Id,
-                        ["Tenant"] = outboxMessage.Tenant,
+                        ["Tenant"] = outboxMessage.TenantId,
                     };
 
                     using (logger.BeginScope(propertys))
@@ -98,7 +98,7 @@ namespace fbognini.Infrastructure.Outbox
         private async Task Process(OutboxMessage outboxMessage, CancellationToken cancellationToken)
         {
             var outboxMessageId = outboxMessage.Id;
-            var outboxTenant = outboxMessage.Tenant;
+            var outboxTenant = outboxMessage.TenantId;
 
             try
             {
@@ -108,12 +108,7 @@ namespace fbognini.Infrastructure.Outbox
                     logger.LogWarning("Tenat {Tenant} for outbox message {OutboxMessageId} was not found", outboxTenant, outboxMessageId);
                 }
 
-                serviceProvider.GetRequiredService<IMultiTenantContextAccessor>().MultiTenantContext = new MultiTenantContext<TTenant>()
-                {
-                    TenantInfo = tenant,
-                    StrategyInfo = null,
-                    StoreInfo = null
-                };
+                serviceProvider.GetRequiredService<IMultiTenantContextSetter>().SetCurrentTenant(tenant);
 
                 using (var outboxScope = serviceProvider.CreateScope())
                 {

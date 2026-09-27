@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 using WebApplication1.Domain.Entities;
-using Finbuckle.MultiTenant;
+using Finbuckle.MultiTenant.Abstractions;
 using fbognini.Infrastructure.Persistence;
 using fbognini.Infrastructure.Outbox;
 using Microsoft.Extensions.Options;
@@ -17,8 +17,8 @@ namespace WebApplication1.Infrastructure.Persistance
             ICurrentUserService currentUserService,
             IDateTimeProvider dateTimeProvider,
             IOutboxMessagesListener outboxMessagesListener,
-            ITenantInfo? currentTenant = null)
-            : base(options, databaseOptions, currentUserService, dateTimeProvider, outboxMessagesListener, currentTenant)
+            IMultiTenantContextAccessor? multiTenantContextAccessor = null)
+            : base(options, databaseOptions, currentUserService, dateTimeProvider, outboxMessagesListener, multiTenantContextAccessor)
         {
         }
 

@@ -1,5 +1,4 @@
 ﻿using fbognini.Infrastructure.Entities;
-using Finbuckle.MultiTenant.Stores;
 using Microsoft.EntityFrameworkCore;
 
 namespace fbognini.Infrastructure.Multitenancy

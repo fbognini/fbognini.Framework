@@ -46,8 +46,8 @@ namespace fbognini.Infrastructure.Persistence
         {
             builder.ApplyConfigurationsFromAssembly(context.GetType().GetTypeInfo().Assembly);
 
-            builder.ApplyGlobalFilters<IHaveTenant>(b => string.IsNullOrWhiteSpace(context.Tenant) || EF.Property<string>(b, nameof(IHaveTenant.Tenant)) == context.Tenant);
             builder.ApplyGlobalFilters<ISoftDelete>(s => s.DeletedOnUtc == null);
+            builder.ApplyMultiTenant<IHaveTenant>();
 
             builder.Entity<OutboxMessage>(b =>
             {
@@ -118,9 +118,9 @@ namespace fbognini.Infrastructure.Persistence
             foreach (var entry in context.ChangeTracker.Entries<IHaveTenant>())
             {
                 if ((entry.State == EntityState.Added || entry.State == EntityState.Modified) &&
-                    string.IsNullOrWhiteSpace(entry.Entity.Tenant))
+                    string.IsNullOrWhiteSpace(entry.Entity.TenantId))
                 {
-                    entry.Entity.Tenant = context.Tenant;
+                    entry.Entity.TenantId = context.Tenant;
                 }
             }
         }
@@ -153,6 +153,7 @@ namespace fbognini.Infrastructure.Persistence
 
             context.FillAuditablePropertys();
             context.FillTenantProperty();
+            context.EnforceMultiTenant();
 
             var result = await context.BaseSaveChangesAsync(cancellationToken);
             await context.OnAfterSaveChanges(beforeResponse, outboxMessagesListener, cancellationToken);

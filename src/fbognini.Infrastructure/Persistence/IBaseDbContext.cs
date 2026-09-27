@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace fbognini.Infrastructure.Persistence
 {
-    public interface IBaseDbContext
+    public interface IBaseDbContext : IMultiTenantDbContext
     {
         DbSet<Audit> AuditTrails { get; set; }
         DbSet<OutboxMessage> OutboxMessages { get; set; }

@@ -434,7 +434,20 @@ namespace fbognini.Infrastructure.Repository
         }
 
 
-#if NET7_0_OR_GREATER
+#if NET10_0_OR_GREATER
+
+        public async Task<int> ExecuteUpdateAsync<T>(Action<UpdateSettersBuilder<T>> setPropertyCalls, CancellationToken cancellationToken = default) where T : class, IEntity
+        {
+            return await ExecuteUpdateAsync(new SelectCriteria<T>(), setPropertyCalls, cancellationToken);
+        }
+
+        public async Task<int> ExecuteUpdateAsync<T>(SelectCriteria<T> criteria, Action<UpdateSettersBuilder<T>> setPropertyCalls, CancellationToken cancellationToken = default) where T : class, IEntity
+        {
+            var entities = GetTrackedQueryable(criteria);
+            return await entities.ExecuteUpdateAsync(setPropertyCalls, cancellationToken);
+        }
+
+#else
 
         public async Task<int> ExecuteUpdateAsync<T>(Expression<Func<SetPropertyCalls<T>, SetPropertyCalls<T>>> setPropertyCalls, CancellationToken cancellationToken = default) where T : class, IEntity
         {

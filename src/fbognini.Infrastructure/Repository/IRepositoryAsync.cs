@@ -138,7 +138,13 @@ namespace fbognini.Infrastructure.Repository
         void Update<T>(T entity) where T : class, IEntity;
 
 
-#if NET7_0_OR_GREATER
+#if NET10_0_OR_GREATER
+
+        // EF Core 10 dropped SetPropertyCalls in favour of the UpdateSettersBuilder callback.
+        Task<int> ExecuteUpdateAsync<T>(Action<UpdateSettersBuilder<T>> setPropertyCalls, CancellationToken cancellationToken = default) where T : class, IEntity;
+        Task<int> ExecuteUpdateAsync<T>(SelectCriteria<T> criteria, Action<UpdateSettersBuilder<T>> setPropertyCalls, CancellationToken cancellationToken = default) where T : class, IEntity;
+
+#else
 
         Task<int> ExecuteUpdateAsync<T>(Expression<Func<SetPropertyCalls<T>, SetPropertyCalls<T>>> setPropertyCalls, CancellationToken cancellationToken = default) where T : class, IEntity;
         Task<int> ExecuteUpdateAsync<T>(SelectCriteria<T> criteria, Expression<Func<SetPropertyCalls<T>, SetPropertyCalls<T>>> setPropertyCalls, CancellationToken cancellationToken = default) where T : class, IEntity;

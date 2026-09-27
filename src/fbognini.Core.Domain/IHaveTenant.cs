@@ -2,5 +2,5 @@
 
 public interface IHaveTenant
 {
-    string Tenant { get; set; }
+    string TenantId { get; set; }
 }

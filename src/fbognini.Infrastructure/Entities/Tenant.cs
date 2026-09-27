@@ -1,5 +1,4 @@
 using fbognini.Infrastructure.Multitenancy;
-using Finbuckle.MultiTenant;
 using System;
 
 namespace fbognini.Infrastructure.Entities
@@ -77,9 +76,18 @@ namespace fbognini.Infrastructure.Entities
             IsActive = false;
         }
 
+#if NET10_0_OR_GREATER
+
+        // Finbuckle 10 narrowed ITenantInfo down to two read-only members.
+        string ITenantInfo.Id => Id;
+        string ITenantInfo.Identifier => Identifier;
+
+#else
+
         string? ITenantInfo.Id { get => Id.ToString(); set => Id = value ?? throw new InvalidOperationException("Id can't be null."); }
         string? ITenantInfo.Identifier { get => Identifier; set => Identifier = value ?? throw new InvalidOperationException("Identifier can't be null."); }
         string? ITenantInfo.Name { get => Name; set => Name = value ?? throw new InvalidOperationException("Name can't be null."); }
-        string? ITenantInfo.ConnectionString { get => ConnectionString; set => ConnectionString = value ?? throw new InvalidOperationException("ConnectionString can't be null."); }
+
+#endif
     }
 }

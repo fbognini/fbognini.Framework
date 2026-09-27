@@ -4,6 +4,7 @@ using fbognini.Infrastructure.Multitenancy;
 using fbognini.Infrastructure.Outbox;
 using fbognini.Infrastructure.Persistence.ConnectionString;
 using fbognini.Infrastructure.Persistence.Initialization;
+using Finbuckle.MultiTenant;
 using LinqToDB.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
@@ -40,7 +41,7 @@ namespace fbognini.Infrastructure.Persistence
                 .AddTransient<IConnectionStringValidator, ConnectionStringValidator>();
         }
 
-        public static FinbuckleMultiTenantBuilder<TTenant> AddPersistenceAndMultitenancy<T, TTenantContext, TTenant>(this IServiceCollection services, IConfiguration configuration, Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptions = null)
+        public static MultiTenantBuilder<TTenant> AddPersistenceAndMultitenancy<T, TTenantContext, TTenant>(this IServiceCollection services, IConfiguration configuration, Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptions = null)
             where T : DbContext, IBaseDbContext
             where TTenantContext : TenantDbContext<TTenant>
             where TTenant : Tenant, new()
@@ -61,7 +62,7 @@ namespace fbognini.Infrastructure.Persistence
         }
 
 
-        public static FinbuckleMultiTenantBuilder<TTenant> AddPersistenceAndMultitenancy<T, TTenant>(this IServiceCollection services, IConfiguration configuration, Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptions = null)
+        public static MultiTenantBuilder<TTenant> AddPersistenceAndMultitenancy<T, TTenant>(this IServiceCollection services, IConfiguration configuration, Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptions = null)
             where T : DbContext, IBaseDbContext
             where TTenant : Tenant, new()
         {
@@ -71,7 +72,7 @@ namespace fbognini.Infrastructure.Persistence
                 .AddMultitenancy<TTenant>(configuration);
         }
 
-        public static FinbuckleMultiTenantBuilder<Tenant> AddPersistenceAndMultitenancy<T>(this IServiceCollection services, IConfiguration configuration, Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptions = null)
+        public static MultiTenantBuilder<Tenant> AddPersistenceAndMultitenancy<T>(this IServiceCollection services, IConfiguration configuration, Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptions = null)
             where T : DbContext, IBaseDbContext
         {
             return services.AddPersistenceAndMultitenancy<T, Tenant>(configuration, configureDbContextOptions);

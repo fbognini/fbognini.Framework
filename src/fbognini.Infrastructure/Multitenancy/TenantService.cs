@@ -1,6 +1,5 @@
 using fbognini.Application.Multitenancy;
 using fbognini.Core.Exceptions;
-using Finbuckle.MultiTenant;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -42,7 +41,7 @@ namespace fbognini.Infrastructure.Multitenancy
         }
 
         public async Task<bool> ExistsWithIdAsync(string id) =>
-            !(await tenantStore.TryGetAsync(id) is null);
+            !(await tenantStore.GetTenantAsync(id) is null);
 
         public async Task<bool> ExistsWithNameAsync(string name) =>
             (await tenantStore.GetAllAsync()).Any(t => t.Name == name);
@@ -71,7 +70,7 @@ namespace fbognini.Infrastructure.Multitenancy
                 ValidUpto = DateTime.UtcNow.AddMonths(1)
             };
 
-            await tenantStore.TryAddAsync(tenant);
+            await tenantStore.AddTenantAsync(tenant);
 
 
             if (dbInitializer is not null)
@@ -83,7 +82,7 @@ namespace fbognini.Infrastructure.Multitenancy
                 }
                 catch
                 {
-                    await tenantStore.TryRemoveAsync(request.Identifier);
+                    await tenantStore.RemoveTenantAsync(request.Identifier);
                     throw;
                 }
             }
@@ -102,7 +101,7 @@ namespace fbognini.Infrastructure.Multitenancy
 
             tenant.Activate();
 
-            await tenantStore.TryUpdateAsync(tenant);
+            await tenantStore.UpdateTenantAsync(tenant);
 
             return String.Format("Tenant {0} is now Activated.", id);
         }
@@ -119,7 +118,7 @@ namespace fbognini.Infrastructure.Multitenancy
 
             tenant.Deactivate();
 
-            await tenantStore.TryUpdateAsync(tenant);
+            await tenantStore.UpdateTenantAsync(tenant);
 
             return String.Format("Tenant {0} is now Deactivated.", id);
         }
@@ -130,14 +129,14 @@ namespace fbognini.Infrastructure.Multitenancy
 
             tenant.SetValidity(extendedExpiryDate);
 
-            await tenantStore.TryUpdateAsync(tenant);
+            await tenantStore.UpdateTenantAsync(tenant);
 
             //return _t[$"Tenant {0}'s Subscription Upgraded. Now Valid till {1}.", id, tenant.ValidUpto];
             return String.Format("Tenant {0}'s Subscription Upgraded. Now Valid till {1}.", id, tenant.ValidUpto);
         }
 
         private async Task<TTenant> GetTenantInfoAsync(string id) =>
-            await tenantStore.TryGetAsync(id)
+            await tenantStore.GetTenantAsync(id)
                 ?? throw new NotFoundException(typeof(TTenant), id);
     }
 

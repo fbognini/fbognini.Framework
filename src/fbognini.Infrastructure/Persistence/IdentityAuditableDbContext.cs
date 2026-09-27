@@ -5,13 +5,11 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Finbuckle.MultiTenant;
 using fbognini.Infrastructure.Entities;
 using fbognini.Infrastructure.Outbox;
 using fbognini.Infrastructure.Persistence;
 using Microsoft.Extensions.Options;
 using fbognini.Infrastructure.Common;
-using static LinqToDB.Reflection.Methods.LinqToDB.Insert;
 
 namespace fbognini.Infrastructure.Persistence
 {
@@ -24,7 +22,7 @@ namespace fbognini.Infrastructure.Persistence
         private readonly ICurrentUserService _currentUserService;
         private readonly IDateTimeProvider _dateTimeProvider;
         private readonly IOutboxMessagesListener _outboxListenerService;
-        private readonly ITenantInfo? _currentTenant;
+        private readonly IMultiTenantContextAccessor? _multiTenantContextAccessor;
 
         private readonly DatabaseSettings _databaseSettings;
 
@@ -34,14 +32,14 @@ namespace fbognini.Infrastructure.Persistence
             ICurrentUserService currentUserService,
             IDateTimeProvider dateTimeProvider,
             IOutboxMessagesListener outboxListenerService,
-            ITenantInfo? currentTenant = null)
+            IMultiTenantContextAccessor? multiTenantContextAccessor = null)
             : base(options)
         {
             _databaseSettings = databaseOptions.Value;
             _currentUserService = currentUserService;
             _dateTimeProvider = dateTimeProvider;
             _outboxListenerService = outboxListenerService;
-            _currentTenant = currentTenant;
+            _multiTenantContextAccessor = multiTenantContextAccessor;
         }
 
         public DbSet<Audit> AuditTrails { get; set; } = default!;
@@ -50,8 +48,17 @@ namespace fbognini.Infrastructure.Persistence
         public string? UserId => _currentUserService.UserId;
         public DateTime Timestamp => _dateTimeProvider.UtcNow;
         public string DBProvider => _databaseSettings.DBProvider;
-        public string? Tenant => _currentTenant?.Id;
-        public string? ConnectionString => _currentTenant?.ConnectionString;
+        public string? Tenant => CurrentTenant?.Id;
+        public string? ConnectionString => CurrentTenant?.ConnectionString;
+
+        protected fbognini.Infrastructure.Entities.Tenant? CurrentTenant =>
+            _multiTenantContextAccessor?.MultiTenantContext.TenantInfo as fbognini.Infrastructure.Entities.Tenant;
+
+        public ITenantInfo? TenantInfo => CurrentTenant;
+
+        // Mismatches are a bug, not a recoverable state; an unset tenant is normal on insert and gets filled from the context.
+        public virtual TenantMismatchMode TenantMismatchMode => TenantMismatchMode.Throw;
+        public virtual TenantNotSetMode TenantNotSetMode => TenantNotSetMode.Overwrite;
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

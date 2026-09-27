@@ -1,4 +1,4 @@
-﻿using fbognini.Core.Domain;
+using fbognini.Core.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
@@ -24,15 +24,7 @@ namespace fbognini.Infrastructure.Persistence
             where TKey: IEquatable<TKey>
         {
             modelBuilder.Entity<TUser>().ToTable("Users", authSchema);
-            modelBuilder.Entity<TRole>(entity =>
-            {
-                entity.ToTable("Roles", authSchema);
-                if (entity is IHaveTenant)
-                {
-                    entity.Metadata.RemoveIndex(new[] { entity.Property(r => r.NormalizedName).Metadata });
-                    entity.HasIndex(r => new { r.NormalizedName, (r as IHaveTenant)!.Tenant }).HasDatabaseName("RoleNameIndex").IsUnique();
-                }
-            });
+            modelBuilder.Entity<TRole>().ToTable("Roles", authSchema);
 
             modelBuilder.Entity<IdentityRoleClaim<TKey>>().ToTable("RoleClaims", authSchema);
             modelBuilder.Entity<IdentityUserRole<TKey>>().ToTable("UserRoles", authSchema);
@@ -44,16 +36,30 @@ namespace fbognini.Infrastructure.Persistence
 
         public static void ApplyGlobalFilters<TInterface>(this ModelBuilder modelBuilder, Expression<Func<TInterface, bool>> expression)
         {
-            var entities = modelBuilder.Model
-                .GetEntityTypes()
-                .Where(e => e.ClrType.GetInterface(typeof(TInterface).Name) != null)
-                .Select(e => e.ClrType);
-            foreach (var entity in entities)
+            foreach (var entity in modelBuilder.GetEntityTypesImplementing<TInterface>())
             {
                 var newParam = Expression.Parameter(entity);
                 var newbody = ReplacingExpressionVisitor.Replace(expression.Parameters.Single(), newParam, expression.Body);
                 modelBuilder.Entity(entity).HasQueryFilter(Expression.Lambda(newbody, newParam));
             }
+        }
+
+        // Finbuckle merges its tenant filter with whatever HasQueryFilter already set, so every other global filter must be applied first.
+        public static void ApplyMultiTenant<TInterface>(this ModelBuilder modelBuilder)
+        {
+            foreach (var entity in modelBuilder.GetEntityTypesImplementing<TInterface>())
+            {
+                modelBuilder.Entity(entity).IsMultiTenant().AdjustUniqueIndexes();
+            }
+        }
+
+        private static Type[] GetEntityTypesImplementing<TInterface>(this ModelBuilder modelBuilder)
+        {
+            return modelBuilder.Model
+                .GetEntityTypes()
+                .Where(e => e.ClrType.GetInterface(typeof(TInterface).Name) != null)
+                .Select(e => e.ClrType)
+                .ToArray();
         }
     }
 }

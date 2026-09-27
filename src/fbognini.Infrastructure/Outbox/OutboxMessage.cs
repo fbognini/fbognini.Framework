@@ -38,7 +38,7 @@ public sealed class OutboxMessage: IHaveTenant
     public DateTime? ReservedOnUtc { get; set; }
     public DateTime? ExpiredOnUtc { get; set; }
 
-    public string Tenant { get; set; } = string.Empty;
+    public string TenantId { get; set; } = string.Empty;
 
     public void SetAsProcessed(DateTime processedOnUtc)
     {

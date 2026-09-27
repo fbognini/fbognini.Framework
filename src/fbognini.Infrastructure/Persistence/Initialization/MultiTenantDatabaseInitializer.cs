@@ -1,6 +1,5 @@
 ﻿using fbognini.Infrastructure.Entities;
 using fbognini.Infrastructure.Multitenancy;
-using Finbuckle.MultiTenant;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -46,11 +45,8 @@ namespace fbognini.Infrastructure.Persistence.Initialization
             using var scope = serviceProvider.CreateScope();
 
             // Then set current tenant so the right connectionstring is used
-            serviceProvider.GetRequiredService<IMultiTenantContextAccessor>()
-                .MultiTenantContext = new MultiTenantContext<TTenantInfo>()
-                {
-                    TenantInfo = tenant
-                };
+            scope.ServiceProvider.GetRequiredService<IMultiTenantContextSetter>()
+                .SetCurrentTenant(tenant);
 
             await scope.ServiceProvider
                 .GetRequiredService<ApplicationDatabaseInitializer<TContext>>()

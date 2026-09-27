@@ -4,6 +4,7 @@ using fbognini.Infrastructure.Persistence;
 using fbognini.Infrastructure.Repository;
 using fbognini.Infrastructure.Tests.Integration.Fixture.Entities.Seeds;
 using Finbuckle.MultiTenant;
+using Finbuckle.MultiTenant.Abstractions;
 using MartinCostello.SqlLocalDb;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -18,15 +19,15 @@ public class DatabaseFixture : IDisposable
     private readonly ICurrentUserService currentUserService = new IntegrationTestsCurrentUserService();
     private readonly IDateTimeProvider dateTimeProvider = new IntegrationTestsDateTimeProvider();
     private readonly IOutboxMessagesListener outboxMessagesListener = Substitute.For<IOutboxMessagesListener>();
-    private readonly ITenantInfo tenantInfo = new TenantInfo();
+    private readonly IMultiTenantContextAccessor multiTenantContextAccessor = new IntegrationTestsMultiTenantContextAccessor();
 
     public DbContextOptions<IntegrationTestsDbContext> DbContextOptions { get; }
     public string ConnectionString { get; }
 
     public IDbContextFactory<IntegrationTestsDbContext> DbContextFactory => 
-        new IntegrationTestsDbContextFactory(DbContextOptions, databaseOptions, currentUserService, dateTimeProvider, outboxMessagesListener, tenantInfo);
+        new IntegrationTestsDbContextFactory(DbContextOptions, databaseOptions, currentUserService, dateTimeProvider, outboxMessagesListener, multiTenantContextAccessor);
 
-    public IntegrationTestsDbContext DbContext => new (DbContextOptions, databaseOptions, currentUserService, dateTimeProvider, outboxMessagesListener, tenantInfo);
+    public IntegrationTestsDbContext DbContext => new (DbContextOptions, databaseOptions, currentUserService, dateTimeProvider, outboxMessagesListener, multiTenantContextAccessor);
 
     public RepositoryAsync<IntegrationTestsDbContext> Repository => new(DbContextFactory, Substitute.For<ILogger<RepositoryAsync<IntegrationTestsDbContext>>>());
 
@@ -93,4 +94,14 @@ public class IntegrationTestsDateTimeProvider : IDateTimeProvider
     public DateTime Now => DateTime.Now;
 
     public DateTime UtcNow => DateTime.UtcNow;
+}
+
+public class IntegrationTestsMultiTenantContextAccessor : IMultiTenantContextAccessor
+{
+#if NET10_0_OR_GREATER
+    // Finbuckle 10 dropped the parameterless constructor; a null tenant still means "unresolved".
+    public IMultiTenantContext MultiTenantContext { get; } = new MultiTenantContext<TenantInfo>(null!);
+#else
+    public IMultiTenantContext MultiTenantContext { get; } = new MultiTenantContext<TenantInfo>();
+#endif
 }

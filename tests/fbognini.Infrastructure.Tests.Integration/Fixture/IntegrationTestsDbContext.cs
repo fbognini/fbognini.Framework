@@ -2,7 +2,7 @@
 using fbognini.Infrastructure.Outbox;
 using fbognini.Infrastructure.Persistence;
 using fbognini.Infrastructure.Tests.Integration.Fixture.Entities;
-using Finbuckle.MultiTenant;
+using Finbuckle.MultiTenant.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -16,7 +16,7 @@ public class IntegrationTestsDbContext : AuditableDbContext<IntegrationTestsDbCo
         ICurrentUserService currentUserService,
         IDateTimeProvider dateTimeProvider,
         IOutboxMessagesListener outboxMessagesListener,
-        ITenantInfo currentTenant) : base(options, databaseOptions, currentUserService, dateTimeProvider, outboxMessagesListener, currentTenant)
+        IMultiTenantContextAccessor multiTenantContextAccessor) : base(options, databaseOptions, currentUserService, dateTimeProvider, outboxMessagesListener, multiTenantContextAccessor)
     {
     }
 

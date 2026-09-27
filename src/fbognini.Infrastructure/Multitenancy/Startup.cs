@@ -16,7 +16,7 @@ namespace fbognini.Infrastructure.Multitenancy
 {
     public static class Startup
     {
-        private static FinbuckleMultiTenantBuilder<TTenant> AddBaseMultitenancy<TTenant>(this IServiceCollection services, IConfiguration configuration)
+        private static MultiTenantBuilder<TTenant> AddBaseMultitenancy<TTenant>(this IServiceCollection services, IConfiguration configuration)
             where TTenant : Tenant, new()
         {
             return services
@@ -25,7 +25,7 @@ namespace fbognini.Infrastructure.Multitenancy
                 .AddMultiTenant<TTenant>();
         }
 
-        public static FinbuckleMultiTenantBuilder<TTenant> AddMultitenancy<TTenantContext, TTenant>(this IServiceCollection services, IConfiguration configuration)
+        public static MultiTenantBuilder<TTenant> AddMultitenancy<TTenantContext, TTenant>(this IServiceCollection services, IConfiguration configuration)
             where TTenantContext: TenantDbContext<TTenant>
             where TTenant : Tenant, new()
         {
@@ -36,19 +36,19 @@ namespace fbognini.Infrastructure.Multitenancy
             return builder;
         }
 
-        public static FinbuckleMultiTenantBuilder<TTenant> AddMultitenancy<TTenant>(this IServiceCollection services, IConfiguration configuration)
+        public static MultiTenantBuilder<TTenant> AddMultitenancy<TTenant>(this IServiceCollection services, IConfiguration configuration)
             where TTenant : Tenant, new()
         {
             return services
                     .AddBaseMultitenancy<TTenant>(configuration);
         }
 
-        public static FinbuckleMultiTenantBuilder<Tenant> AddMultitenancy(this IServiceCollection services, IConfiguration configuration)
+        public static MultiTenantBuilder<Tenant> AddMultitenancy(this IServiceCollection services, IConfiguration configuration)
         {
             return services.AddMultitenancy<Tenant>(configuration);
         }
 
-        public static FinbuckleMultiTenantBuilder<TTenant> WithFakeMultitenancy<TTenant>(this FinbuckleMultiTenantBuilder<TTenant> builder)
+        public static MultiTenantBuilder<TTenant> WithFakeMultitenancy<TTenant>(this MultiTenantBuilder<TTenant> builder)
             where TTenant : Tenant, new()
         {
             return builder
@@ -69,12 +69,12 @@ namespace fbognini.Infrastructure.Multitenancy
                 .WithStaticStrategy(MultitenancyConstants.Root.Key);
         }
 
-        public static FinbuckleMultiTenantBuilder<Tenant> WithFakeMultitenancy(this FinbuckleMultiTenantBuilder<Tenant> builder)
+        public static MultiTenantBuilder<Tenant> WithFakeMultitenancy(this MultiTenantBuilder<Tenant> builder)
         {
             return builder.WithFakeMultitenancy<Tenant>();
         }
 
-        public static FinbuckleMultiTenantBuilder<Tenant> WithQueryStringStrategy(this FinbuckleMultiTenantBuilder<Tenant> builder, string queryStringKey) =>
+        public static MultiTenantBuilder<Tenant> WithQueryStringStrategy(this MultiTenantBuilder<Tenant> builder, string queryStringKey) =>
             builder.WithDelegateStrategy(context =>
             {
                 if (context is HttpContext httpContext)
@@ -87,7 +87,7 @@ namespace fbognini.Infrastructure.Multitenancy
                 return Task.FromResult((string?)null);
             });
 
-        public static FinbuckleMultiTenantBuilder<Tenant> WithOriginOrRefererStrategy(this FinbuckleMultiTenantBuilder<Tenant> builder) =>
+        public static MultiTenantBuilder<Tenant> WithOriginOrRefererStrategy(this MultiTenantBuilder<Tenant> builder) =>
             builder.WithDelegateStrategy(context =>
             {
                 if (context is HttpContext httpContext)

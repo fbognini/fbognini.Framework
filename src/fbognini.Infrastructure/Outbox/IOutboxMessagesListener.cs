@@ -2,7 +2,6 @@
 using fbognini.Core.Domain;
 using fbognini.Infrastructure.Entities;
 using fbognini.Infrastructure.Persistence;
-using Finbuckle.MultiTenant;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
