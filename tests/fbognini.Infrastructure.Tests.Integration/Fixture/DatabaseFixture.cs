@@ -28,6 +28,15 @@ public class DatabaseFixture : IDisposable
 
     public IntegrationTestsDbContext DbContext => new (DbContextOptions, databaseOptions, currentUserService, dateTimeProvider, outboxMessagesListener, tenantInfo);
 
+    public IntegrationTestsDbContext DbContextWith(params Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor[] interceptors)
+    {
+        var options = new DbContextOptionsBuilder<IntegrationTestsDbContext>(DbContextOptions)
+            .AddInterceptors(interceptors)
+            .Options;
+
+        return new(options, databaseOptions, currentUserService, dateTimeProvider, outboxMessagesListener, tenantInfo);
+    }
+
     public RepositoryAsync<IntegrationTestsDbContext> Repository => new(DbContextFactory, Substitute.For<ILogger<RepositoryAsync<IntegrationTestsDbContext>>>());
 
     public DatabaseFixture()

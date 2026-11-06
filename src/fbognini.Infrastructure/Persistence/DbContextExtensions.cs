@@ -231,7 +231,14 @@ namespace fbognini.Infrastructure.Persistence
                     ? entry.Properties
                     : entry.Properties.Where(x => !auditableProperties.Contains(x.Metadata.Name));
 
-                var originalValues = await entry.GetDatabaseValuesAsync(cancellationToken);
+                // Only a modified row is read back: an entity attached with Update() has no original values of its own, and the database is the only place that still holds them.
+                // An added row has no old values, and a deleted one keeps in the change tracker the values it was loaded with: reading them again cost one round trip per row, so a save that replaced a hundred rows made a hundred queries before writing anything.
+                var originalValues = entry.State switch
+                {
+                    EntityState.Modified => await entry.GetDatabaseValuesAsync(cancellationToken),
+                    EntityState.Deleted => entry.OriginalValues,
+                    _ => null,
+                };
 
                 var auditEntry = new AuditEntry(entry)
                 {
