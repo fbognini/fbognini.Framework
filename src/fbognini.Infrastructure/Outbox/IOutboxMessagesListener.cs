@@ -73,6 +73,13 @@ internal class OutboxMessagesListenerService : BackgroundService, IOutboxMessage
             {
                 await ProcessDomainEventsAndWait(interval, stoppingToken);
             }
+            // The reservation is rolled back whole, so a deadlock loses nothing: the next round reserves the same messages again.
+            catch (Exception ex) when (IsDeadlock(ex))
+            {
+                logger.LogWarning(ex, "Outbox reservation chosen as deadlock victim, retrying");
+
+                await Task.Delay(Random.Shared.Next(100, 1000), stoppingToken);
+            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "An error occurred during domain events processing");
@@ -80,6 +87,23 @@ internal class OutboxMessagesListenerService : BackgroundService, IOutboxMessage
                 await Task.Delay(5000, stoppingToken);
             }
         }
+    }
+
+    private const int SqlServerDeadlockVictim = 1205;
+    private const string PostgresDeadlockDetected = "40P01";
+
+    internal static bool IsDeadlock(Exception exception)
+    {
+        for (var current = exception; current is not null; current = current.InnerException)
+        {
+            if (current is Microsoft.Data.SqlClient.SqlException { Number: SqlServerDeadlockVictim }
+                || current is Npgsql.PostgresException { SqlState: PostgresDeadlockDetected })
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public async Task PublishDomainMemoryEventAsync(IReadOnlyList<IDomainMemoryEvent> domainMemoryEvents, CancellationToken cancellationToken)

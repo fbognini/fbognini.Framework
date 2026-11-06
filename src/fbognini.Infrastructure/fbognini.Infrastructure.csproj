@@ -31,4 +31,8 @@
     <ProjectReference Include="..\fbognini.Core.Domain\fbognini.Core.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="fbognini.Infrastructure.Tests.Integration" />
+  </ItemGroup>
+
 </Project>

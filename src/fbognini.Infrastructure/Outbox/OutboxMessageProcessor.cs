@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions;
-using fbognini.Application.Multitenancy;
+﻿using fbognini.Application.Multitenancy;
 using fbognini.Infrastructure.Common;
 using fbognini.Infrastructure.Entities;
 using fbognini.Infrastructure.Persistence;
@@ -158,15 +157,12 @@ namespace fbognini.Infrastructure.Outbox
             var linq2dbTable = dbContext.OutboxMessages
                 .ToLinqToDBTable();
 
+            // ROWLOCK keeps the locks of a batch on its own rows: a page lock would cover rows another processor is reserving at the same time.
             if (databaseSettings.DBProvider == DbProviderKeys.SqlServer)
             {
-                //linq2dbTable = linq2dbTable
-                //        .TableHint(SqlServerHints.Table.UpdLock)
-                //        .TableHint(SqlServerHints.Table.RowLock)
-                //        .TableHint(SqlServerHints.Table.ReadPast);
-
                 linq2dbTable = linq2dbTable
                         .TableHint(SqlServerHints.Table.UpdLock)
+                        .TableHint(SqlServerHints.Table.RowLock)
                         .TableHint(SqlServerHints.Table.ReadPast);
             }
 
@@ -181,18 +177,9 @@ namespace fbognini.Infrastructure.Outbox
                 query = query.QueryHint(PostgreSQLHints.ForUpdate);
             }
 
-            if (ignoreApplicationFiter)
+            if (ignoreApplicationFiter == false)
             {
-                if (outboxSettings.ApplicationFilter == OutboxProcessorApplicationFilter.Me)
-                {
-                    query = query.Where(x => x.Application == applicationName);
-                }
-                else if (outboxSettings.ApplicationFilter == OutboxProcessorApplicationFilter.Custom &&
-                    outboxSettings.Applications is not null)
-                {
-                    var applications = outboxSettings.Applications.Split(new[] { ',', ';' }).ToList();
-                    query = query.Where(x => applications.Contains(x.Application));
-                }
+                query = OutboxApplicationFilter.Apply(query, outboxSettings, applicationName);
             }
 
             query = query
@@ -213,7 +200,18 @@ namespace fbognini.Infrastructure.Outbox
                     @event.ExpiredOnUtc = expiredOnUtc;
                 }
 
-                await dbContext.BulkUpdateAsync(events, cancellationToken: cancellationToken);
+                // An update by key touches only the rows this batch already holds.
+                // BulkUpdate joins a temporary table to the whole outbox, and that scan waited on the rows of a concurrent reservation while holding its own: a deadlock between two processors.
+                var ids = events.Select(x => x.Id).ToList();
+                await dbContext.OutboxMessages
+                    .ToLinqToDBTable()
+                    .IgnoreFilters()
+                    .Where(x => ids.Contains(x.Id))
+                    .Set(x => x.IsProcessing, true)
+                    .Set(x => x.LockId, lockId)
+                    .Set(x => x.ReservedOnUtc, utc)
+                    .Set(x => x.ExpiredOnUtc, expiredOnUtc)
+                    .UpdateAsync(cancellationToken);
             }
 
             await transaction.CommitAsync(cancellationToken);
